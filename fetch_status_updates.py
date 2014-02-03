@@ -5,8 +5,6 @@ import requests
 import sys
 import time
 
-_TIME_BETWEEN_RUNS_SEC = 120
-
 
 def get_friends(access_token, logger):
     url = 'https://graph.facebook.com/me/friends'
@@ -42,31 +40,28 @@ if __name__ == '__main__':
     access_token = sys.argv[1]
     base_dir = sys.argv[2]
 
-    while True:
-        epoch_ms = int(time.time() * 1000)
-        dir = os.path.join(base_dir, str(epoch_ms))
+    epoch_ms = int(time.time() * 1000)
+    dir = os.path.join(base_dir, str(epoch_ms))
 
-        logger.info('Starting new run; data will be written to %s.', dir)
-        os.mkdir(dir)
+    logger.info('Starting new run; data will be written to %s.', dir)
+    os.mkdir(dir)
         
-        friends = list(get_friends(access_token, logger))
-        logger.info('%s friends found.', len(friends))
+    friends = list(get_friends(access_token, logger))
+    logger.info('%s friends found.', len(friends))
 
-        for friend_id in friends:
-            data_file = os.path.join(dir, friend_id)
-            logger.info(
-                'Fetching feed for friend %s; data will be written to %s.',
-                friend_id, data_file)
-            response = requests.get(
-                'https://graph.facebook.com/{0}/statuses'.format(friend_id),
-                params={'access_token': access_token})
-            if response.status_code == requests.codes.ok:
-                with open(data_file, 'w') as f:
-                    f.write(response.text)
-            else:
-                logger.error('Received status code %s for friend %s: %s',
-                             response.status_code, friend_id, response.text)
+    for friend_id in friends:
+        data_file = os.path.join(dir, friend_id)
+        logger.info(
+            'Fetching feed for friend %s; data will be written to %s.',
+            friend_id, data_file)
+        response = requests.get(
+            'https://graph.facebook.com/{0}/statuses'.format(friend_id),
+            params={'access_token': access_token})
+        if response.status_code == requests.codes.ok:
+            with open(data_file, 'w') as f:
+                f.write(response.text)
+        else:
+            logger.error('Received status code %s for friend %s: %s',
+                         response.status_code, friend_id, response.text)
 
-        logger.info('Done with run.')
-        time.sleep(_TIME_BETWEEN_RUNS_SEC)
-
+    logger.info('Done.')
